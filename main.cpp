@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <windows.h>
 #include "executable/ApelJelek.h"
-// #include "Sortir.h"
 
 struct To_Do{
     char jam[250];
@@ -14,15 +13,24 @@ struct To_Do{
     char selesai[20];
 };
 
-int  Tambah_Jadwal(int size, struct To_Do *list);
-int  read_db(struct To_Do *list, const char *filename, int size);
-void Jadwal(struct To_Do *list, int size);
-void cek_db(const char *filename);
-void cari (struct To_Do *list, int size);
-void overwrite(struct To_Do *list, int size, const char *aksinya);
-void update (struct To_Do *list, int size);
-const char* daftar_hari();
-const char* daftar_bulan(int no);
+//mengolah database
+void tampilan(const char *filename); //memuat tampilan menu berupa ascii art
+void cek_db(const char *filename); //cek database dan jika tidak ada akan membuat database yang baru
+int read_db(struct To_Do *list, const char *filename, int size); //membaca database yang sudah tersimpan
+//fitur utama
+int Tambah_Jadwal(int size, struct To_Do *list); //input struct
+void overwrite(struct To_Do *list, int size, const char *aksinya); //menyimpan memori pada struct ke dalam database
+void Jadwal(struct To_Do *list, int size); //menampilkan jadwal yang tersimpan
+void cari(struct To_Do *list, int size); //fitur untuk mencari jadwal berdasarkan hari
+int update(struct To_Do *list, int size); //fitur untuk mengubah jadwal yang tersimpan
+//sortir
+void quicksort(struct To_Do *list, int low, int high); //fitur untuk sortir berdasarkan tanggal yang terdekat
+int partition(struct To_Do *list, int low, int high); //partisi untuk fungsi quicksort
+int cek_tanggal(struct To_Do *list, struct To_Do *pembanding); //cek tanggal untuk kebutuhan sortir
+void tukeran(struct To_Do *aseli, struct To_Do *falsu); //menukar posisi index dari list yang terpilih
+//fitur tambahan
+const char* daftar_hari(); //mengubah input 1-7 menjadi hari
+const char* daftar_bulan(int no); //mengubah input 1-12 menjadi bulan
 
 int main(){
     int size;
@@ -33,40 +41,59 @@ int main(){
     size = read_db(list, "db.txt", size);
 
     system("CLS");
-    // system("start \"\" music\\1.mp3");
+    tampilan("menu/1.txt");
+    system("start \"\" music\\sumeru.mp3");
 
     do{
         size = read_db(list, "db.txt", size);
-        system("type menu\\1.txt");
+        // system("type menu\\1.txt");
         scanf("%s", &menu);
         printf("\n");
 
         if(menu==0){
             printf("dadah"); 
-            exit(0);}
+            exit(0);
+        }
 
         switch (menu) {
         case '1':
             size = read_db(list, "db.txt", size);
+            quicksort(list, 0, size - 1);
+            overwrite(list, size, "w");
             Jadwal(list, size);
+            tampilan("menu/1.txt");
             break;
 
         case '2':
             system("CLS");
             size = read_db(list, "db.txt", size);
             Tambah_Jadwal(size, list);
+            printf("\nJadwalmu sudah ditambahkan!\n");
+            printf("Tekan enter untuk melanjutkan...");
+            getchar();
+            tampilan("menu/1.txt");
             break;
 
         case '3':
             system("CLS");
             size = read_db(list, "db.txt", size);
             cari(list, size);
+            tampilan("menu/1.txt");
             break;
-        case 'b': bjari();
+
+        case '0':
+            printf("dadah"); 
+            exit(0);
+            
+        case 'b': 
+            bjari();
+            break;
 
         default: 
             printf("input tidak valid");
-            Sleep(2000); 
+            getchar();
+            printf("Tekan enter untuk melanjutkan...");
+            getchar();
             break;
         }    
     } while (menu!='0');
@@ -77,7 +104,7 @@ void cek_db(const char *filename){
     FILE *db = fopen(filename, "r");
 
     if (db == NULL) {
-        printf("database tidak ditemukan sehingga list di reset");
+        printf("database tidak ditemukan sehingga jadwalmu di reset");
         system("type nul > db.txt");
         return;
     }
@@ -113,9 +140,11 @@ int read_db(struct To_Do *list, const char *filename, int size){
 
 void Jadwal(struct To_Do *list, int size) {
     const char *bulannya;
+    system("CLS");
 
     if (size == 0){
-        printf("Jadwalmu kosong bang, mending bobo aja\n");
+        printf("Jadwalmu kosong bang, mending bobo aja\n\n");
+        getchar();
     } else {
     system("CLS");
     printf("                    LIST KEGIATAN\n");
@@ -133,16 +162,16 @@ void Jadwal(struct To_Do *list, int size) {
     }
     update(list, size);
     }
-    getchar();
     printf("Tekan enter untuk melanjutkan...");
     getchar();
+    system("CLS");
 }
 
 int Tambah_Jadwal(int size, struct To_Do *list){
     FILE *db = fopen("db.txt", "a");
     const char* hari;
 
-    printf("mau ngapain : ");
+    printf("Mau ngapain : ");
     getchar();
     fgets(list[size].kegiatan, 250, stdin);
     list[size].kegiatan[strcspn(list[size].kegiatan, "\n")] = 0;
@@ -159,9 +188,10 @@ int Tambah_Jadwal(int size, struct To_Do *list){
     printf("Tahun : ");
     scanf("%d", &list[size].tahun);
 
-    printf("jam berapa (contoh : 09.00) : ");
+    printf("Jam berapa (contoh : 09.00) : ");
     getchar();
     fgets(list[size].jam, 250, stdin);
+    list[size].jam[strcspn(list[size].jam, "\n")] = 0;
 
     strcpy(list[size].selesai, "Belum selesai");
     size++;
@@ -174,6 +204,7 @@ int Tambah_Jadwal(int size, struct To_Do *list){
 
 void cari (struct To_Do *list, int size){
     const char* hari;
+    system("CLS");
     hari = daftar_hari();
     const char *bulannya;
 
@@ -246,35 +277,73 @@ const char* daftar_bulan(int no){
     return bulan;
 }
 
-void update (struct To_Do *list, int size){
+int update (struct To_Do *list, int size){
     char ubah[2];
     int menu, pilihan;
-    printf("ingin merubah jadwal? (y/n) : ");
+    printf("\ningin merubah jadwal? (y/n) : ");
     scanf("%s", &ubah);
     if(strcmp(ubah, "y")==0){
-        printf("[1] Tandai sudah selesai\n");
-        printf("[2] Rubah jadwal\n");
+        printf("\n[1] Tandai sudah selesai\n");
+        printf("[2] Ubah jadwal\n");
         printf("[3] Hapus jadwal\n");
-        printf("Masukkan pilihan jadwal : ");
+        printf("\nMasukkan pilihan kamu : ");
         scanf("%d", &menu);
 
         switch (menu)
         {
         case 1:
-            printf("Masukkan nomor kegiatan yang sudah selesai : ");
+            printf("\nMasukkan nomor kegiatan yang sudah selesai : ");
             scanf("%d", &pilihan);
-            strcpy(list[pilihan-1].selesai, "\nselesai");
+            if (pilihan>size){
+                printf("Pilihan tidak valid\n");
+                getchar();
+            } else {
+            strcpy(list[pilihan-1].selesai, "Selesai");
             overwrite(list, size, "w");
-            printf("Kegiatan %d sudah ditandai selesai : ", pilihan);
+            printf("\nKegiatan %d sudah ditandai selesai!\n", pilihan);
+            getchar();
+            }
             break;
-        
+        case 2:
+            printf("\nMasukkan nomor kegiatan yang ingin di ubah : ");
+            scanf("%d", &pilihan);
+            if (pilihan>size){
+                printf("Pilihan tidak valid\n");
+                getchar();
+            } else {
+            size = Tambah_Jadwal(size, list);
+            tukeran(&list[pilihan-1], &list[size-1]);
+            size--;
+            overwrite(list, size, "w");
+            printf("\nKegiatan %d sudah diubah!\n", pilihan);
+            }
+            break;
+
+        case 3:
+            printf("\nMasukkan nomor kegiatan yang ingin di hapus : ");
+            scanf("%d", &pilihan);
+            if (pilihan>size){
+                printf("Pilihan tidak valid\n");
+                getchar();
+            } else {
+            for (int i = pilihan-1; i <= size; i++){
+                tukeran(&list[i], &list[i+1]);
+            }
+            size--;
+            overwrite(list, size, "w");
+            printf("\nKegiatan %d sudah dihapus!\n", pilihan);
+            getchar();
+            }
+            break;
+            
         default:
             break;
         }
 
     }else{
-        return;
+        return -1;
     }
+    return size;
 }
 
 void overwrite(struct To_Do *list, int size, const char *aksinya){
@@ -282,13 +351,66 @@ void overwrite(struct To_Do *list, int size, const char *aksinya){
 
     for (int i = 0; i < size; i++){
         fprintf(db, "%s\n", list[i].kegiatan);
-        fprintf(db, "%s\n", list[i].hari);   
+        fprintf(db, "%s\n", list[i].hari);
         fprintf(db, "%d\n", list[i].tanggal);
         fprintf(db, "%d\n", list[i].bulan);
         fprintf(db, "%d\n", list[i].tahun);
-        fprintf(db, "%s", list[i].jam);
-        fprintf(db, "%s\n", list[i].selesai);       
+        fprintf(db, "%s\n", list[i].jam);
+        fprintf(db, "%s\n", list[i].selesai);
     }
-    
+
     fclose(db);
+}
+
+void tukeran(struct To_Do *aseli, struct To_Do *falsu){
+    struct To_Do temp = *falsu;
+    *falsu = *aseli;
+    *aseli = temp;
+}
+
+int cek_tanggal(struct To_Do *list, struct To_Do *pembanding){
+    if(list->tahun != pembanding->tahun){
+        return list->tahun - pembanding->tahun;
+    } else if (list->bulan != pembanding->bulan){
+        return list->bulan - pembanding->bulan;
+    } else {
+        return list->hari - pembanding->hari;
+    }
+}
+
+void quicksort(struct To_Do *list, int low, int high) {
+    if (low < high) {
+        int pi = partition(list, low, high);
+
+        quicksort(list, low, pi - 1);
+        quicksort(list, pi + 1, high);
+    }
+}
+
+int partition(struct To_Do *list, int low, int high) {
+    struct To_Do pivot = list[high];
+    int i = low - 1;
+
+    for (int j = low; j <= high - 1; j++) {
+        if (cek_tanggal(&list[j], &pivot) < 0) {
+            i++;
+            tukeran(&list[i], &list[j]);
+        }
+    }
+
+    tukeran(&list[i + 1], &list[high]);
+    return i + 1;
+}
+
+void tampilan(const char *filename) {
+    FILE *file = fopen(filename, "r"); 
+    char ch;
+
+    ch = fgetc(file);
+    while (ch != EOF) {
+        putchar(ch);
+        ch = fgetc(file);
+    }
+
+    fclose(file);
 }
