@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <windows.h>
-#include "executable/ApelJelek.h"
+//#include "executable/ApelJelek.h"
 
 struct To_Do{
     char jam[250];
@@ -86,7 +86,7 @@ int main(){
             exit(0);
             
         case 'b': 
-            bjari();
+            //bjari();
             break;
 
         default: 
