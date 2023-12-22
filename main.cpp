@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <windows.h>
+#include <string.h>
 //#include "executable/ApelJelek.h"
 
 struct To_Do{
